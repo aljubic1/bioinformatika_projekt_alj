@@ -98,7 +98,7 @@ Random Forest ostvario je nešto bolje ukupne performanse te je odabran kao uspj
 1. Klonirati repozitorij:
 
 ```bash
-git clone https://github.com/korisnicko-ime/bioinformatics-ds-project.git
+git clone https://github.com/aljubic1/bioinformatika_projekt_alj.git
 ```
 
 2. Instalirati potrebne biblioteke:
