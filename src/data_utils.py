@@ -56,7 +56,7 @@ def print_dataset_info(df: pd.DataFrame) -> None:
     Ispisuje osnovne informacije o skupu podataka.
     """
 
-    # Ispis broja redaka i stupaca.
+    # Ispis broja redaka.
     print(f"Broj redaka: {df.shape[0]}")
 
     # Ispis broja stupaca.
@@ -201,10 +201,9 @@ def save_processed_dataset(df: pd.DataFrame, output_path: str) -> None:
     df.to_csv(output_path, index=False)
 
 
-    " dodajemo non-AMP"
-    def load_ampbenchmark_fasta(file_path: str) -> pd.DataFrame:
+def load_ampbenchmark_fasta(file_path: str) -> pd.DataFrame:
     """
-    Učitava AMPBenchmark FASTA datoteku i izdvaja sekvence s oznakama.
+    Učitava AMPBenchmark FASTA datoteku i vraća DataFrame sa stupcima ID i SEQUENCE.
     """
 
     # Pretvaramo putanju u Path objekt.
@@ -214,33 +213,35 @@ def save_processed_dataset(df: pd.DataFrame, output_path: str) -> None:
     if not file_path.exists():
         raise FileNotFoundError(f"Datoteka ne postoji: {file_path}")
 
-    # Kreiramo praznu listu za zapise iz FASTA datoteke.
+    # Kreiramo praznu listu u koju ćemo spremati FASTA zapise.
     records = []
 
-    # Otvaramo FASTA datoteku u načinu za čitanje.
+    # Otvaramo FASTA datoteku.
     with open(file_path, "r", encoding="utf-8") as fasta_file:
 
-        # Postavljamo početne vrijednosti za zaglavlje i sekvencu.
+        # Početno zaglavlje postavljamo na None.
         header = None
+
+        # Kreiramo listu za dijelove sekvence.
         sequence_parts = []
 
         # Prolazimo kroz svaki redak FASTA datoteke.
         for line in fasta_file:
 
-            # Uklanjamo praznine i prijelome redova.
+            # Uklanjamo praznine i znak za novi red.
             line = line.strip()
 
             # Preskačemo prazne retke.
             if not line:
                 continue
 
-            # Provjeravamo je li redak FASTA zaglavlje.
+            # Ako redak počinje znakom >, riječ je o FASTA zaglavlju.
             if line.startswith(">"):
 
-                # Ako već imamo prethodni zapis, spremamo ga.
+                # Ako već postoji prethodni zapis, spremamo ga.
                 if header is not None:
 
-                    # Spajamo dijelove sekvence u jedan string.
+                    # Spajamo sve dijelove sekvence u jedan string.
                     sequence = "".join(sequence_parts)
 
                     # Dodajemo zapis u listu.
@@ -252,15 +253,15 @@ def save_processed_dataset(df: pd.DataFrame, output_path: str) -> None:
                 # Spremamo novo zaglavlje bez znaka >.
                 header = line[1:]
 
-                # Resetiramo listu dijelova sekvence.
+                # Resetiramo dijelove sekvence za novi zapis.
                 sequence_parts = []
 
             else:
 
-                # Dodajemo redak sekvence u listu dijelova.
+                # Ako redak nije zaglavlje, riječ je o dijelu sekvence.
                 sequence_parts.append(line)
 
-        # Spremamo zadnji FASTA zapis nakon završetka petlje.
+        # Nakon završetka petlje spremamo zadnji zapis.
         if header is not None:
 
             # Spajamo dijelove zadnje sekvence.
@@ -272,8 +273,12 @@ def save_processed_dataset(df: pd.DataFrame, output_path: str) -> None:
                 "SEQUENCE": sequence
             })
 
-    # Pretvaramo listu zapisa u DataFrame.
+    # Pretvaramo listu FASTA zapisa u DataFrame.
     df = pd.DataFrame(records)
+
+    # Provjeravamo je li FASTA datoteka uspješno učitana.
+    if df.empty:
+        raise ValueError("FASTA datoteka je prazna ili nije ispravno učitana.")
 
     # Vraćamo DataFrame.
     return df
@@ -283,6 +288,9 @@ def extract_ampbenchmark_by_label(df: pd.DataFrame, label: int) -> pd.DataFrame:
     """
     Izdvaja zapise iz AMPBenchmark skupa prema oznaci AMP=0 ili AMP=1.
     """
+
+    # Provjeravamo postoji li stupac ID.
+    check_required_columns(df, ["ID", "SEQUENCE"])
 
     # Provjeravamo je li label ispravan.
     if label not in [0, 1]:
@@ -296,6 +304,10 @@ def extract_ampbenchmark_by_label(df: pd.DataFrame, label: int) -> pd.DataFrame:
 
     # Zadržavamo samo zapise koji u ID-u sadrže traženi label.
     filtered_df = filtered_df[filtered_df["ID"].str.contains(label_pattern, regex=False)].copy()
+
+    # Ako nema zapisa za traženu klasu, zaustavljamo program.
+    if filtered_df.empty:
+        raise ValueError(f"Nisu pronađeni zapisi s oznakom {label_pattern}.")
 
     # Dodajemo numeričku oznaku klase.
     filtered_df["label"] = label
