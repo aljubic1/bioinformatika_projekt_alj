@@ -199,3 +199,81 @@ def save_processed_dataset(df: pd.DataFrame, output_path: str) -> None:
 
     # Spremamo DataFrame u CSV bez indeksa.
     df.to_csv(output_path, index=False)
+
+
+    " dodajemo non-AMP"
+    def load_ampbenchmark_fasta(file_path: str) -> pd.DataFrame:
+    """
+    Učitava AMPBenchmark FASTA datoteku i izdvaja sekvence s oznakama.
+    """
+
+    # Pretvaramo putanju u Path objekt.
+    file_path = Path(file_path)
+
+    # Provjeravamo postoji li FASTA datoteka.
+    if not file_path.exists():
+        raise FileNotFoundError(f"Datoteka ne postoji: {file_path}")
+
+    # Kreiramo praznu listu za zapise iz FASTA datoteke.
+    records = []
+
+    # Otvaramo FASTA datoteku u načinu za čitanje.
+    with open(file_path, "r", encoding="utf-8") as fasta_file:
+
+        # Postavljamo početne vrijednosti za zaglavlje i sekvencu.
+        header = None
+        sequence_parts = []
+
+        # Prolazimo kroz svaki redak FASTA datoteke.
+        for line in fasta_file:
+
+            # Uklanjamo praznine i prijelome redova.
+            line = line.strip()
+
+            # Preskačemo prazne retke.
+            if not line:
+                continue
+
+            # Provjeravamo je li redak FASTA zaglavlje.
+            if line.startswith(">"):
+
+                # Ako već imamo prethodni zapis, spremamo ga.
+                if header is not None:
+
+                    # Spajamo dijelove sekvence u jedan string.
+                    sequence = "".join(sequence_parts)
+
+                    # Dodajemo zapis u listu.
+                    records.append({
+                        "ID": header,
+                        "SEQUENCE": sequence
+                    })
+
+                # Spremamo novo zaglavlje bez znaka >.
+                header = line[1:]
+
+                # Resetiramo listu dijelova sekvence.
+                sequence_parts = []
+
+            else:
+
+                # Dodajemo redak sekvence u listu dijelova.
+                sequence_parts.append(line)
+
+        # Spremamo zadnji FASTA zapis nakon završetka petlje.
+        if header is not None:
+
+            # Spajamo dijelove zadnje sekvence.
+            sequence = "".join(sequence_parts)
+
+            # Dodajemo zadnji zapis u listu.
+            records.append({
+                "ID": header,
+                "SEQUENCE": sequence
+            })
+
+    # Pretvaramo listu zapisa u DataFrame.
+    df = pd.DataFrame(records)
+
+    # Vraćamo DataFrame.
+    return df
