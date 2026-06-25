@@ -127,6 +127,12 @@ pip install -r requirements.txt
 
 ---
 
+## Ograničenja
+
+Rezultati dobiveni ovim projektom služe isključivo u obrazovne i istraživačke svrhe. Razvijeni modeli predstavljaju primjer primjene metoda strojnog učenja na bioinformatičkim podacima i ne mogu se koristiti kao dijagnostički ili medicinski alat.
+
+Za potpuniju znanstvenu validaciju bilo bi potrebno koristiti dodatne vanjske skupove podataka i provesti detaljniju eksperimentalnu provjeru predikcija.
+
 ## Autor
 Ana Ljubić
 
