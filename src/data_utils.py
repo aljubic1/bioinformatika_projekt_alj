@@ -277,3 +277,31 @@ def save_processed_dataset(df: pd.DataFrame, output_path: str) -> None:
 
     # Vraćamo DataFrame.
     return df
+
+
+def extract_ampbenchmark_by_label(df: pd.DataFrame, label: int) -> pd.DataFrame:
+    """
+    Izdvaja zapise iz AMPBenchmark skupa prema oznaci AMP=0 ili AMP=1.
+    """
+
+    # Provjeravamo je li label ispravan.
+    if label not in [0, 1]:
+        raise ValueError("Label mora biti 0 ili 1.")
+
+    # Kopiramo DataFrame.
+    filtered_df = df.copy()
+
+    # Kreiramo tekstualni uzorak koji tražimo u ID stupcu.
+    label_pattern = f"AMP={label}"
+
+    # Zadržavamo samo zapise koji u ID-u sadrže traženi label.
+    filtered_df = filtered_df[filtered_df["ID"].str.contains(label_pattern, regex=False)].copy()
+
+    # Dodajemo numeričku oznaku klase.
+    filtered_df["label"] = label
+
+    # Resetiramo indeks.
+    filtered_df = filtered_df.reset_index(drop=True)
+
+    # Vraćamo filtrirani DataFrame.
+    return filtered_df
